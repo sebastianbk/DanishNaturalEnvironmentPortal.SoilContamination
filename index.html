@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Jordforurening</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.min.js"></script>
+	<script src="jscoord-1.1.1.js"></script>
+	
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+	<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	
+	<style type="text/css">
+		body {
+		  padding-top: 70px;
+		  padding-bottom: 30px;
+		}
+
+		.theme-dropdown .dropdown-menu {
+		  position: static;
+		  display: block;
+		  margin-bottom: 20px;
+		}
+
+		.theme-showcase > p > .btn {
+		  margin: 5px 0;
+		}
+	
+		#overlay {
+			margin: 0 auto;
+            background-size: 100% 100%;
+		}
+		
+		#toggler {
+			width: 250px;
+			text-align: center;
+			line-height: 44px;
+			margin: 0 auto 10px;
+		}
+	</style>
+</head>
+
+<body role="document">
+	<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+	  <div class="container">
+		<div class="navbar-header">
+		  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+			<span class="sr-only">Toggle navigation</span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+		  </button>
+		  <a class="navbar-brand" href="javascript:goHome();">Jordforurening</a>
+		</div>
+		<div class="navbar-collapse collapse">
+		  <ul class="nav navbar-nav">
+			<li><a href="http://www.miljoeportal.dk/omdmp/Sider/forside.aspx" target="_blank">Om Danmarks Miljøportal</a></li>
+			<li><a href="http://www.miljoeportal.dk/kontakt/Sider/Kontaktdmp.aspx" target="_blank">Kontakt</a></li>
+		  </ul>
+		</div>
+	  </div>
+	</div>
+	
+	<div class="container theme-showcase" role="main">
+		<div class="jumbotron">
+			<h1>Tjek jorden i dit område</h1>
+			<p>Find ud af, om der er forurenet jord i dit nærområde. Denne web-app bruger automatisk din lokation i browseren til at finde ud af, hvor du befinder dig lige nu.</p>
+			<p><a href="#" class="btn btn-primary btn-lg" role="button" onclick="getOverlay()">Tjek nu &raquo;</a></p>
+		</div>
+		
+		<div class="container" id="firstrow">
+		<div class="row">
+		<div class="col-md-4">
+		<h2>Hvad er miljødata?</h2>
+		<p>Miljødata er data om fx natur, jordforurening og vandkvalitet og er en forudsætning for, at vi i Danmark kan overvåge, forvalte, forske og værne om vores natur og miljø. Data om natur og miljø bruges af myndigheder, andre miljøprofessionelle brugere og borgere, der via Danmarks Miljøportal har nem adgang til data.</p>
+		<p><a class="btn btn-default" href="http://internet.miljoeportal.dk/intro/Sider/forside.aspx" role="button">Læs mere om miljødata &raquo;</a></p>
+		</div>
+		<div class="col-md-4">
+		<h2>Danmarks Miljøportal</h2>
+		<p>På miljøportalen finder du offentlige data om Danmarks natur og miljø. Data i miljøportalen opdateres løbende og udstilles på et kort, hvor mange data kan ses samtidigt. At natur- og miljødata er samlet ét sted gør arbejdet med miljødata nemt og giver desuden et langt bedre sammenlignings- og forvaltningsgrundlag.</p>
+		<p><a class="btn btn-default" href="http://internet.miljoeportal.dk/intro/Sider/forside.aspx" role="button">Gå til DMP &raquo;</a></p>
+		</div>
+		<div class="col-md-4">
+		<h2>Kortforsyningen</h2>
+		<p>Kortforsyningen er Geodatastyrelsens distribution af kort og geodata på internettet. Frie data og øvrige geodata kan hentes via webtjenester. Kortforsyningen udstiller data via en række tjenester der kombinerer data og funktionalitet. Via Kortforsyningen er der således adgang til topografiske og matrikulære data</p>
+		<p><a class="btn btn-default" href="http://www.kortforsyningen.dk/" role="button">Geodatastyrelsen &raquo;</a></p>
+		</div>
+		</div>
+		</div>
+		
+		<div id="maprow" style="display: none;">
+		<div id="toggler">
+			<button type="button" id="mapBtn" class="btn btn-success" style="margin-right: 10px;">Skærmkort</button>
+			<button type="button" id="ortoBtn" class="btn btn-primary">Orto-kort</button>
+		</div>
+		<div id="overlay"></div>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+	var latitude = 56.152984399999994;
+	var longtitude = 10.1995141;
+	var mapSrc1 = '';
+	var mapSrc2 = '';
+	var utmZone = 0;
+	var utm1min = 0;
+	var utm2min = 0;
+	var utm1max = 0;
+	var utm2max = 0;
+	
+	function getLocation()
+	{
+		if (navigator.geolocation)
+		{
+			console.log("Trying to get location...");
+			navigator.geolocation.getCurrentPosition(geoSuccess, geoFailure);
+		}
+		else { console.log("Geolocation is not supported by this browser."); }
+	}
+	
+	function geoSuccess(position)
+	{
+		console.log("Got location!");
+		latitude = position.coords.latitude;
+		longtitude = position.coords.longitude;
+		console.log(latitude + ', ' + longtitude);
+		doLogic();
+	}
+	
+	function geoFailure()
+	{
+		console.log("Didn't get location!");
+		console.log(latitude + ', ' + longtitude);
+		doLogic();
+	}
+	
+	function doLogic()
+	{
+		var latlng = new LatLng(latitude, longtitude);
+		var utm = latlng.toUTMRef();
+		utmZone = parseInt(utm.toString().split(' ')[0]);
+		var utm1 = utm.toString().split(' ')[1];
+		var utm2 = utm.toString().split(' ')[2];
+		
+		console.log('UTM: ' + utm);
+		
+		utm1min = parseInt(utm1) - 1000;
+		utm2min = parseInt(utm2) - 1000;
+		utm1max = parseInt(utm1) + 1000;
+		utm2max = parseInt(utm2) + 1000;
+		
+		var utm1Obj = new UTMRef(utm1min, utm2min, "V", utmZone);
+		var utm2Obj = new UTMRef(utm1max, utm2max, "V", utmZone);
+		
+		latlng1 = utm1Obj.toLatLng();
+		latlng2 = utm2Obj.toLatLng();
+		
+		console.log(latlng1.toString());
+		console.log(latlng2.toString());
+		
+		//mapSrc1 = 'http://dev.virtualearth.net/REST/v1/Imagery/Map/Road/?mapArea=' + latlng1.lat + ',' + latlng1.lng + ',' + latlng2.lat + ',' + latlng2.lng + '&mapSize=500,500&key=AvaYHUeRlYzzWy1eJKQ8XE9rY7UyqzGK_6A_RtNm0nNB7K41HnXR93MgkpLnVwHt';
+		mapSrc1 ='http://kortforsyningen.kms.dk/topo_skaermkort?ignoreillegallayers=TRUE&transparent=TRUE&login=demo&password=demo&REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&LAYERS=dtk_skaermkort&STYLES=&FORMAT=image/png&BGCOLOR=0xFFFFFF&TRANSPARENT=TRUE&SRS=EPSG:258' + utmZone + '&BBOX=' + utm1min + ',' + utm2min + ',' + utm1max + ',' + utm2max + '&WIDTH=1140&HEIGHT=1140';
+		mapSrc2 ='http://kortforsyningen.kms.dk/orto_foraar?ignoreillegallayers=TRUE&transparent=TRUE&login=demo&password=demo&REQUEST=GetMap&SERVICE=WMS&VERSION=1.1.1&LAYERS=orto_foraar&STYLES=&FORMAT=image/png&BGCOLOR=0xFFFFFF&TRANSPARENT=TRUE&SRS=EPSG:258' + utmZone + '&BBOX=' + utm1min + ',' + utm2min + ',' + utm1max + ',' + utm2max + '&WIDTH=1140&HEIGHT=1140';
+		console.log(mapSrc1);
+		console.log(mapSrc2);
+		
+		document.getElementById("overlay").style.backgroundImage="url('" + mapSrc1 + "')";
+	}
+	
+	getLocation();
+	
+	function getOverlay()
+	{
+		$(".jumbotron").css('display', 'none');
+		$("#firstrow").css('display', 'none');
+		$("#maprow").css('display', 'block');
+		var src = 'http://arealinformation.miljoeportal.dk/gis/rest/services/public/MapServer/export?bbox=' + utm1min + ',' + utm2min + ',' + utm1max + ',' + utm2max + '&size=1140,1140&dpi=96&format=png32&transparent=true&imageSR=258' + utmZone + '&bboxSR=258' + utmZone + '&layers=show%3a40&f=image&';
+		console.log(src);
+		$("#overlay").html('<img src="' + src + '" border="0" style="width: 100%;" />');
+	}
+	
+	function goHome() {
+		$(".jumbotron").css('display', 'block');
+		$("#firstrow").css('display', 'block');
+		$("#maprow").css('display', 'none');
+	}
+	
+	$("#mapBtn").click(function() {
+		document.getElementById("overlay").style.backgroundImage="url('" + mapSrc1 + "')";
+	});
+	$("#ortoBtn").click(function() {
+		document.getElementById("overlay").style.backgroundImage="url('" + mapSrc2 + "')";
+	});
+	</script>
+</body>
+
+</html>
